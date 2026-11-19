@@ -7,6 +7,8 @@ import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { AGENTS } from "@/lib/moneiva/agents-data"
+import type { AgentId } from "@/lib/moneiva/agents-extra-data"
+import { RunAgent, RunCanvas } from "@/components/moneiva/activity/activity-agent"
 import { INBOX_LINK, type ActivityRow } from "@/lib/moneiva/activity-data"
 import { WRONG_REASONS } from "@/lib/moneiva/training-data"
 import { StageBadge, ToneBadge } from "@/components/moneiva/status"
@@ -19,7 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
-export type SheetTab = "summary" | "convo" | "steps"
+export type SheetTab = "summary" | "convo" | "steps" | "agent" | "canvas"
 
 const CALLOUT = {
   needs: { title: "Needs you", cls: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950", fg: "text-amber-800 dark:text-amber-200" },
@@ -205,7 +207,7 @@ export function ActivitySheet({
   const [last, setLast] = React.useState(row)
   if (row && row !== last) setLast(row)
   const r = row ?? last
-  const agentId = AGENTS.find((a) => a.name === r?.agent)?.id ?? "op"
+  const agentId: AgentId = AGENTS.find((a) => a.name === r?.agent)?.id ?? "op"
   const callout = r && (r.status === "needs" || r.status === "fail" || r.status === "prog") ? CALLOUT[r.status] : null
   const inbox = r ? INBOX_LINK[r.id] ?? "/inbox" : "/inbox"
 
@@ -241,6 +243,8 @@ export function ActivitySheet({
                   <TabsTrigger value="summary">Summary</TabsTrigger>
                   <TabsTrigger value="convo">Conversation</TabsTrigger>
                   <TabsTrigger value="steps">Steps</TabsTrigger>
+                  <TabsTrigger value="agent">Agent</TabsTrigger>
+                  <TabsTrigger value="canvas">Canvas</TabsTrigger>
                 </TabsList>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -381,13 +385,21 @@ export function ActivitySheet({
                     </div>
                   ))}
                 </TabsContent>
+
+                <TabsContent value="agent">
+                  <RunAgent row={r} agentId={agentId} />
+                </TabsContent>
+
+                <TabsContent value="canvas">
+                  <RunCanvas row={r} agentId={agentId} />
+                </TabsContent>
               </div>
             </Tabs>
 
             <div className="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3.5">
               <Button asChild variant="outline" size="sm">
-                <Link href={`/agents/${agentId}?tab=flow`}>
-                  How the agent runs
+                <Link href={`/agents/${agentId}`}>
+                  Open agent
                   <ExternalLink />
                 </Link>
               </Button>

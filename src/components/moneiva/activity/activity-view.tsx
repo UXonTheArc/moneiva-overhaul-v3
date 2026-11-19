@@ -169,11 +169,11 @@ export function ActivityView({ initial }: { initial: ActivityInitial }) {
   )
 }
 
-const TABS: SheetTab[] = ["summary", "convo", "steps"]
+const TABS: SheetTab[] = ["summary", "convo", "steps", "agent", "canvas"]
 export const EMPTY_FILTERS: Filters = { agent: [], channel: [], status: [], type: [] }
 
 /**
- * Deep links: ?item=r1 opens a row, &tab=convo|steps picks the sheet tab,
+ * Deep links: ?item=r1 opens a row, &tab=convo|steps|agent|canvas picks the sheet tab,
  * ?status=needs (or agent, channel, type; comma separated) sets filters, ?menu=status opens a filter menu.
  */
 export function ActivityFromParams() {
