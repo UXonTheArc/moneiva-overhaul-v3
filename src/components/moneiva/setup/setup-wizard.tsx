@@ -331,7 +331,7 @@ function TopStrip() {
 
 function Welcome({ onStart }: { onStart: () => void }) {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center">
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-8 px-4 pt-12 pb-12 text-center md:pt-20">
       <span className="grid size-14 place-items-center rounded-2xl bg-indigo-50 text-blue-800 dark:bg-indigo-950 dark:text-blue-200">
         <Brain className="size-7" />
       </span>
