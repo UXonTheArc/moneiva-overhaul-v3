@@ -17,8 +17,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LEARNING_AGENTS, TASK_AGENTS, type Agent } from "@/lib/moneiva/agents-data"
+import { MANY_AGENTS } from "@/lib/moneiva/agents-many-data"
+import { cn } from "@/lib/utils"
 import type { AgentStatus } from "@/lib/moneiva/data"
 
+import { AgentsTable } from "./agents-table"
 import { CreateAgentDialog } from "./create-agent-dialog"
 import { KindIcon } from "./kind-icon"
 import { MenuItem } from "./menus"
@@ -28,6 +31,7 @@ export function AgentsList() {
   const q = useQuery()
   const [moved, setMoved] = useState<Record<string, AgentStatus>>({})
   const createOpen = q.get("create") === "1"
+  const large = q.get("sample") === "large"
 
   const setStatus = (a: Agent, from: AgentStatus, to: AgentStatus, msg: string) => {
     setMoved((m) => ({ ...m, [a.id]: to }))
@@ -47,11 +51,16 @@ export function AgentsList() {
           </Button>
         }
       />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {TASK_AGENTS.map((a) => (
-          <AgentCard key={a.id} agent={a} status={moved[a.id] ?? a.status} onStatus={setStatus} />
-        ))}
-      </div>
+      <SampleSwitch large={large} onChange={(l) => q.set({ sample: l ? "large" : null })} />
+      {large ? (
+        <AgentsTable />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {TASK_AGENTS.map((a) => (
+            <AgentCard key={a.id} agent={a} status={moved[a.id] ?? a.status} onStatus={setStatus} />
+          ))}
+        </div>
+      )}
       <Link
         href="/operator"
         className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/40 px-5 py-4 transition-colors hover:bg-muted"
@@ -67,6 +76,29 @@ export function AgentsList() {
       </Link>
       <CreateAgentDialog open={createOpen} onOpenChange={(o) => q.set({ create: o ? "1" : null })} />
     </>
+  )
+}
+
+/** Mockup only: flip between a typical account and a large one, to show the page past about 9 agents. */
+function SampleSwitch({ large, onChange }: { large: boolean; onChange: (large: boolean) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 self-start rounded-lg border border-dashed px-3 py-1.5 text-[13px] text-muted-foreground">
+      Mockup sample:
+      {[
+        [false, `Typical account (${TASK_AGENTS.length} agents)`],
+        [true, `Large account (${MANY_AGENTS.length} agents)`],
+      ].map(([v, label]) => (
+        <button
+          key={String(v)}
+          type="button"
+          aria-pressed={large === v}
+          onClick={() => onChange(v as boolean)}
+          className={cn("rounded-md px-2 py-0.5", large === v ? "bg-muted font-medium text-foreground" : "hover:text-foreground")}
+        >
+          {label as string}
+        </button>
+      ))}
+    </div>
   )
 }
 
