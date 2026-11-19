@@ -51,11 +51,11 @@ export function OperatorOverview() {
         description="The brain behind your customer service desk. It learns how your team works through its learning agents, and each request type earns its way from Learn to Autopilot."
         actions={
           <>
-            <Button asChild variant="outline">
-              <Link href="/playbook">Open Playbook</Link>
-            </Button>
             <Button asChild>
               <Link href="/teach">Teach it</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/playbook">Open Playbook</Link>
             </Button>
           </>
         }
