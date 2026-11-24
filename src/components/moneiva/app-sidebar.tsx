@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { clearNewAgents } from "@/lib/moneiva/new-agents-store"
 
 import Image from "next/image"
@@ -11,6 +11,8 @@ import {
   BarChart3,
   Bot,
   Brain,
+  ChevronDown,
+  Cog,
   ChevronsUpDown,
   FileText,
   GraduationCap,
@@ -34,7 +36,12 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { LEARNING_IDS } from "@/lib/moneiva/agents-data"
 import { inboxItems } from "@/lib/moneiva/inbox-data"
 import { ACTIVITY } from "@/lib/moneiva/activity-data"
@@ -45,7 +52,7 @@ const FAILS = ACTIVITY.filter((r) => r.status === "fail").length
 type NavItem = { title: string; icon: LucideIcon; href?: string; badge?: string; dot?: "amber" | "red"; dotLabel?: string }
 type NavGroup = { label: string; items: NavItem[] }
 
-// Proposed nav (Jake, Oct 16). Management items are in the nav only; their screens are not part of this mockup.
+// Proposed nav (Jake, Oct 16). Management moved under Build on Nov 24.
 const NAV: NavGroup[] = [
   {
     label: "Work",
@@ -73,15 +80,14 @@ const NAV: NavGroup[] = [
       { title: "Workflows", icon: Workflow, href: "/workflows" },
     ],
   },
-  {
-    label: "Management",
-    items: [
-      { title: "Credentials", icon: KeyRound },
-      { title: "Users", icon: Users },
-      { title: "Settings", icon: Settings },
-      { title: "KPI Charts", icon: BarChart3 },
-    ],
-  },
+]
+
+/** Management sits under Build and opens to show its pages, as in the current app's Setup group. */
+const MANAGEMENT: NavItem[] = [
+  { title: "Connections", icon: KeyRound, href: "/connections" },
+  { title: "Users", icon: Users, href: "/users" },
+  { title: "Settings", icon: Settings, href: "/settings" },
+  { title: "Trends and KPIs", icon: BarChart3, href: "/trends" },
 ]
 
 /** Learning agents belong to the Operator, so their pages light up Overview, not Task agents. */
@@ -148,6 +154,7 @@ export function AppSidebar() {
                   {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
                 </SidebarMenuItem>
               ))}
+              {group.label === "Build" ? <ManagementItem pathname={pathname} /> : null}
             </SidebarMenu>
           </SidebarGroup>
         ))}
@@ -169,5 +176,46 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+  )
+}
+
+function ManagementItem({ pathname }: { pathname: string }) {
+  const here = MANAGEMENT.some((m) => isActive(pathname, m.href))
+  const [open, setOpen] = useState(here)
+  const { state, setOpen: setSidebarOpen } = useSidebar()
+  return (
+    <Collapsible open={open || here} onOpenChange={setOpen} asChild>
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            tooltip="Management"
+            isActive={here && state === "collapsed"}
+            onClick={(e) => {
+              // Collapsed nav: open it, so the Management pages show.
+              if (state === "collapsed") {
+                e.preventDefault()
+                setSidebarOpen(true)
+                setOpen(true)
+              }
+            }}
+          >
+            <Cog className="size-4" />
+            <span>Management</span>
+            <ChevronDown className={cn("ml-auto size-4 text-muted-foreground transition-transform", !(open || here) && "-rotate-90")} />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {MANAGEMENT.map((m) => (
+              <SidebarMenuSubItem key={m.title}>
+                <SidebarMenuSubButton asChild isActive={isActive(pathname, m.href)}>
+                  <Link href={m.href!}>{m.title}</Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
   )
 }

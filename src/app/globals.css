@@ -44,6 +44,8 @@
 }
 
 :root {
+  --series-1: #2a78d6;
+  --series-1-soft: #2a78d61f;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -79,6 +81,8 @@
 }
 
 .dark {
+  --series-1: #3987e5;
+  --series-1-soft: #3987e529;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

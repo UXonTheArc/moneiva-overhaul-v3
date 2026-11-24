@@ -5,6 +5,7 @@ import { ArrowRight, Inbox } from "lucide-react"
 import { Page, PageHeader } from "@/components/moneiva/page-header"
 import { AgentStrip } from "@/components/moneiva/home/agent-strip"
 import { PeriodMenu } from "@/components/moneiva/home/period-menu"
+import { HomeKpis } from "@/components/moneiva/kpi/home-kpis"
 import { Wins } from "@/components/moneiva/home/wins"
 import { StageBoard, StageBoardFromParams } from "@/components/moneiva/home/stage-board"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,8 @@ export default function HomePage() {
       </div>
 
       <AgentStrip />
+
+      <HomeKpis />
 
       <Wins />
 
