@@ -41,12 +41,13 @@ export type StepCardProps = {
   href?: string
   selected?: boolean
   isNew?: boolean
+  changed?: boolean
   onClick?: () => void
   className?: string
 }
 
 /** One step on a canvas: numbered chip, kind, title, one line of detail. Clickable when onClick is set. */
-export function StepCard({ n, kind, title, sub, color, link, href, selected, isNew, onClick, className }: StepCardProps) {
+export function StepCard({ n, kind, title, sub, color, link, href, selected, isNew, changed, onClick, className }: StepCardProps) {
   const body = (
     <>
       <span className="flex items-center gap-2">
@@ -57,7 +58,11 @@ export function StepCard({ n, kind, title, sub, color, link, href, selected, isN
           {n}
         </span>
         <span className="text-xs font-medium text-muted-foreground">{kind}</span>
-        {isNew ? <span className="ml-auto text-xs text-blue-700 dark:text-blue-300">New in draft</span> : null}
+        {isNew ? (
+          <span className="ml-auto text-xs text-blue-700 dark:text-blue-300">New in draft</span>
+        ) : changed ? (
+          <span className="ml-auto text-xs text-blue-700 dark:text-blue-300">Changed in draft</span>
+        ) : null}
       </span>
       <span className="font-medium">{title}</span>
       <span className="text-xs leading-snug text-muted-foreground">{sub}</span>
@@ -65,7 +70,7 @@ export function StepCard({ n, kind, title, sub, color, link, href, selected, isN
   )
   const cls = cn(
     "flex w-[300px] max-w-full flex-col gap-1.5 rounded-[10px] border bg-card px-3.5 py-3 text-left text-sm shadow-xs",
-    isNew && "border-dashed border-blue-300 dark:border-blue-800",
+    (isNew || changed) && "border-dashed border-blue-300 dark:border-blue-800",
     selected && "border-primary ring-[3px] ring-ring/40",
     className
   )

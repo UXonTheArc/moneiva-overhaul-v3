@@ -21,6 +21,8 @@ export type ListAgent = {
   error?: string
   runs: string
   href: string
+  /** Just made on this visit (mockup only). */
+  fresh?: boolean
 }
 
 const a = (x: Omit<ListAgent, "href"> & { href?: string }): ListAgent => ({ href: "/agents/check", ...x })

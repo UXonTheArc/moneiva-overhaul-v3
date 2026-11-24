@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 import type { AgentStatus } from "@/lib/moneiva/data"
 
 import { AgentsTable } from "./agents-table"
-import { CreateAgentDialog } from "./create-agent-dialog"
+import { CreateAgentDialog, type CreatedAgent } from "./create-agent-dialog"
 import { KindIcon } from "./kind-icon"
 import { MenuItem } from "./menus"
 import { useQuery } from "./use-query"
@@ -32,6 +32,28 @@ export function AgentsList() {
   const [moved, setMoved] = useState<Record<string, AgentStatus>>({})
   const createOpen = q.get("create") === "1"
   const large = q.get("sample") === "large"
+  // Agents made on this visit. Mockup only: they go away when you leave the page.
+  const [created, setCreated] = useState<Agent[]>([])
+  const onCreated = (c: CreatedAgent) =>
+    setCreated((all) => [
+      {
+        ...TASK_AGENTS[0],
+        id: `new-${all.length}` as Agent["id"],
+        name: c.name,
+        kind: c.kind,
+        status: "off",
+        team: c.team,
+        address: c.address,
+        channel: `${{ email: "Email", inbound: "Inbound calls", outbound: "Outbound calls", files: "Files" }[c.kind]} · ${c.address}`,
+        desc: c.desc,
+        error: undefined,
+        today: "0",
+        needs: "",
+        workflow: c.start,
+        href: "#",
+      },
+      ...all,
+    ])
 
   const setStatus = (a: Agent, from: AgentStatus, to: AgentStatus, msg: string) => {
     setMoved((m) => ({ ...m, [a.id]: to }))
@@ -53,9 +75,26 @@ export function AgentsList() {
       />
       <SampleSwitch large={large} onChange={(l) => q.set({ sample: l ? "large" : null })} />
       {large ? (
-        <AgentsTable />
+        <AgentsTable
+          extra={created.map((a) => ({
+            id: a.id,
+            name: a.name,
+            kind: a.kind,
+            status: moved[a.id] ?? a.status,
+            channel: a.channel,
+            team: a.team,
+            today: 0,
+            todayLabel: a.todayLabel,
+            runs: a.workflow,
+            href: "#",
+            fresh: true,
+          }))}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {created.map((a) => (
+            <AgentCard key={a.id} agent={a} status={moved[a.id] ?? a.status} onStatus={setStatus} fresh />
+          ))}
           {TASK_AGENTS.map((a) => (
             <AgentCard key={a.id} agent={a} status={moved[a.id] ?? a.status} onStatus={setStatus} />
           ))}
@@ -74,7 +113,7 @@ export function AgentsList() {
           Open the Operator <ArrowRight className="size-3.5" />
         </span>
       </Link>
-      <CreateAgentDialog open={createOpen} onOpenChange={(o) => q.set({ create: o ? "1" : null })} />
+      <CreateAgentDialog open={createOpen} onOpenChange={(o) => q.set({ create: o ? "1" : null })} onCreated={onCreated} />
     </>
   )
 }
@@ -106,20 +145,30 @@ function AgentCard({
   agent: a,
   status,
   onStatus,
+  fresh,
 }: {
   agent: Agent
   status: AgentStatus
   onStatus: (a: Agent, from: AgentStatus, to: AgentStatus, msg: string) => void
+  /** Just made on this visit: highlighted, with no page to open yet in this mockup. */
+  fresh?: boolean
 }) {
   const router = useRouter()
   return (
-    <Card className="gap-3 p-[18px]">
+    <Card className={cn("gap-3 p-[18px]", fresh && "border-blue-300 ring-[3px] ring-blue-100 animate-in fade-in slide-in-from-top-2 duration-500 dark:border-blue-800 dark:ring-blue-950")}>
       <div className="flex items-start gap-3">
         <KindIcon kind={a.kind} />
         <span className="flex min-w-0 flex-1 flex-col leading-snug">
-          <Link href={a.href} className="text-[15px] font-semibold hover:underline">
-            {a.name}
-          </Link>
+          {fresh ? (
+            <span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
+              {a.name}
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">Just created</span>
+            </span>
+          ) : (
+            <Link href={a.href} className="text-[15px] font-semibold hover:underline">
+              {a.name}
+            </Link>
+          )}
           <span className="text-[13px] text-muted-foreground">{a.channel}</span>
         </span>
         <StatusDot status={status} className="pt-0.5 text-[13px]" />

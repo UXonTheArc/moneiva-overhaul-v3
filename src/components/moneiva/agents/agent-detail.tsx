@@ -1,7 +1,7 @@
 "use client"
 
 import { CircleAlert, Ellipsis, FlaskConical, Pencil } from "lucide-react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/moneiva/page-header"
@@ -19,7 +19,7 @@ import { AGENT_STATUS_OPTIONS, FLOWS, requestTypesFor, type AgentId } from "@/li
 import type { AgentStatus } from "@/lib/moneiva/data"
 
 import { AgentTestSheet } from "./agent-test-sheet"
-import { DataTab, FlowTab, ProfileTab, ToolsTab, TypesTab, type DraftStep } from "./agent-tabs"
+import { DataTab, FlowTab, ProfileTab, ToolsTab, TypesTab, type DraftStep, type StepEdits } from "./agent-tabs"
 import { KindIcon } from "./kind-icon"
 import { MenuItem, StatusMenu } from "./menus"
 import { useQuery } from "./use-query"
@@ -55,12 +55,40 @@ export function AgentDetail({ id }: { id: AgentId }) {
     if (!draft) setDraft(published)
     q.set({ tab: "flow", edit: "1" })
   }
+  const newKey = useRef(0)
   const addStep = (index: number, kind: string) => {
+    const step: DraftStep = { key: `n${++newKey.current}`, kind, title: NEW_STEP[kind] ?? "New step", sub: "New step. Set it up before you publish.", isNew: true }
     setDraft((d) => {
       const base = d ?? published
-      const step: DraftStep = { key: `n${Date.now()}`, kind, title: NEW_STEP[kind] ?? "New step", sub: "New step. Set it up before you publish.", isNew: true }
       return [...base.slice(0, index), step, ...base.slice(index)]
     })
+    setSelected(step.key)
+  }
+
+  const [selected, setSelected] = useState<string | null>(null)
+  const edit = (fn: (steps: DraftStep[]) => DraftStep[]) => setDraft((d) => fn(d ?? published))
+  const edits: StepEdits = {
+    selected,
+    onSelect: setSelected,
+    onChange: (key, patch) => {
+      // Undo of a delete comes back through here with the step's old position in the key.
+      if (key === "__restore__") {
+        const [at, k] = String(patch.key).split("|")
+        return edit((all) => [...all.slice(0, Number(at)), { ...(patch as DraftStep), key: k }, ...all.slice(Number(at))])
+      }
+      edit((all) => all.map((s) => (s.key === key ? { ...s, ...patch } : s)))
+    },
+    onDelete: (key) => {
+      setSelected(null)
+      edit((all) => all.filter((s) => s.key !== key))
+    },
+    onMove: (key, dir) =>
+      edit((all) => {
+        const i = all.findIndex((s) => s.key === key)
+        const next = [...all]
+        ;[next[i], next[i + dir]] = [next[i + dir], { ...next[i], changed: true }]
+        return next
+      }),
   }
 
   const flowNote = editing ? "Draft, not live yet" : draft ? "Draft saved, not live yet" : publishedNote
@@ -149,6 +177,7 @@ export function AgentDetail({ id }: { id: AgentId }) {
                     className="text-destructive hover:text-destructive"
                     onClick={() => {
                       setDraft(null)
+                      setSelected(null)
                       q.set({ edit: null })
                       toast("Draft discarded. The live version is unchanged.")
                     }}
@@ -168,7 +197,8 @@ export function AgentDetail({ id }: { id: AgentId }) {
                   <Button
                     size="sm"
                     onClick={() => {
-                      if (draft) setPublished(draft.map((s) => ({ ...s, isNew: false })))
+                      if (draft) setPublished(draft.map((s) => ({ ...s, isNew: false, changed: false })))
+                      setSelected(null)
                       setDraft(null)
                       setPublishedNote("Published just now by Taylor Morgan")
                       q.set({ edit: null })
@@ -193,7 +223,7 @@ export function AgentDetail({ id }: { id: AgentId }) {
           <TypesTab agent={agent} />
         </TabsContent>
         <TabsContent value="flow">
-          <FlowTab agent={agent} steps={editing ? (draft ?? published) : published} editing={editing} onAdd={addStep} />
+          <FlowTab agent={agent} steps={editing ? (draft ?? published) : published} editing={editing} onAdd={addStep} edits={edits} />
         </TabsContent>
         <TabsContent value="tools">
           <ToolsTab agent={agent} />

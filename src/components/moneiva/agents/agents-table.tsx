@@ -35,21 +35,22 @@ const STATUS_CHIPS: { key: StatusFilter; label: string; test: (a: ListAgent) => 
   { key: "off", label: "Off or paused", test: (a) => a.status === "off" || a.status === "paused" },
 ]
 
-export function AgentsTable() {
+export function AgentsTable({ extra = [] }: { extra?: ListAgent[] }) {
   const [q, setQ] = useState("")
   const [status, setStatus] = useState<StatusFilter>("all")
   const [kind, setKind] = useState<AgentKind | "all">("all")
   const [open, setOpen] = useState<Record<string, boolean>>({})
 
+  const ALL = [...extra, ...MANY_AGENTS]
   const term = q.trim().toLowerCase()
   const chip = STATUS_CHIPS.find((c) => c.key === status)!
   const matches = (a: ListAgent) =>
     chip.test(a) && (kind === "all" || a.kind === kind) && (!term || `${a.name} ${a.team} ${a.channel}`.toLowerCase().includes(term))
   const filtering = status !== "all" || kind !== "all" || !!term
 
-  const originals = MANY_AGENTS.filter((a) => !a.base)
-  const copiesOf = (id: string) => MANY_AGENTS.filter((a) => a.base === id)
-  const attention = MANY_AGENTS.filter(needsYou)
+  const originals = ALL.filter((a) => !a.base)
+  const copiesOf = (id: string) => ALL.filter((a) => a.base === id)
+  const attention = ALL.filter(needsYou)
 
   // A group shows when the original or any copy matches. While filtering, groups open so matches are visible.
   const groups = originals
@@ -118,7 +119,7 @@ export function AgentsTable() {
         </Select>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Status">
           {STATUS_CHIPS.map((c) => {
-            const n = MANY_AGENTS.filter(c.test).length
+            const n = ALL.filter(c.test).length
             return (
               <button
                 key={c.key}
@@ -191,7 +192,7 @@ export function AgentsTable() {
         )}
       </Card>
       <span className="text-[13px] text-muted-foreground">
-        {filtering ? `${shown} of ${MANY_AGENTS.length} agents` : `${MANY_AGENTS.length} agents · ${originals.length} originals and ${MANY_AGENTS.length - originals.length} copies for customers and desks`}
+        {filtering ? `${shown} of ${ALL.length} agents` : `${ALL.length} agents · ${originals.length} originals and ${ALL.length - originals.length} copies for customers and desks`}
       </span>
     </div>
   )
@@ -217,7 +218,8 @@ function Row({
     <div
       className={cn(
         "grid grid-cols-[minmax(0,1fr)_auto_40px] items-center gap-x-4 gap-y-1 px-4 py-3 md:grid-cols-[minmax(0,1fr)_160px_130px_110px_minmax(0,220px)_40px]",
-        dim && "opacity-60"
+        dim && "opacity-60",
+        a.fresh && "bg-blue-50/70 animate-in fade-in duration-500 dark:bg-blue-950/40"
       )}
     >
       <span className={cn("flex min-w-0 items-center gap-3", child && "pl-9 md:pl-10")}>
@@ -236,9 +238,16 @@ function Row({
         <KindIcon kind={a.kind} size="sm" />
         <span className="flex min-w-0 flex-col leading-snug">
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
-            <Link href={a.href} className="text-sm font-medium hover:underline md:truncate">
-              {a.name}
-            </Link>
+            {a.fresh ? (
+              <span className="text-sm font-medium md:truncate">{a.name}</span>
+            ) : (
+              <Link href={a.href} className="text-sm font-medium hover:underline md:truncate">
+                {a.name}
+              </Link>
+            )}
+            {a.fresh ? (
+              <span className="flex-none rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">Just created</span>
+            ) : null}
             {copies ? (
               <button
                 type="button"
