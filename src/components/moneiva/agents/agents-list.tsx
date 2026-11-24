@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { LEARNING_AGENTS, TASK_AGENTS, type Agent } from "@/lib/moneiva/agents-data"
 import { MANY_AGENTS } from "@/lib/moneiva/agents-many-data"
+import { addNewAgent, useNewAgents } from "@/lib/moneiva/new-agents-store"
 import { cn } from "@/lib/utils"
 import type { AgentStatus } from "@/lib/moneiva/data"
 
@@ -32,13 +33,14 @@ export function AgentsList() {
   const [moved, setMoved] = useState<Record<string, AgentStatus>>({})
   const createOpen = q.get("create") === "1"
   const large = q.get("sample") === "large"
-  // Agents made on this visit. Mockup only: they go away when you leave the page.
-  const [created, setCreated] = useState<Agent[]>([])
-  const onCreated = (c: CreatedAgent) =>
-    setCreated((all) => [
-      {
+  // Agents made on this visit. Mockup only: they go away when you leave the agent pages.
+  const created = useNewAgents().map((n) => n.agent)
+  const onCreated = (c: CreatedAgent) => {
+    const id = `new-${Date.now().toString(36)}`
+    addNewAgent({
+      agent: {
         ...TASK_AGENTS[0],
-        id: `new-${all.length}` as Agent["id"],
+        id: id as Agent["id"],
         name: c.name,
         kind: c.kind,
         status: "off",
@@ -48,12 +50,18 @@ export function AgentsList() {
         desc: c.desc,
         error: undefined,
         today: "0",
+        todayLabel: { email: "emails today", inbound: "calls today", outbound: "calls today", files: "files today" }[c.kind],
         needs: "",
         workflow: c.start,
-        href: "#",
+        href: `/agents/new?id=${id}`,
+        who: c.job.who,
+        goal: c.job.goal,
+        may: c.job.may,
+        mayNot: c.job.mayNot,
       },
-      ...all,
-    ])
+      flow: c.steps,
+    })
+  }
 
   const setStatus = (a: Agent, from: AgentStatus, to: AgentStatus, msg: string) => {
     setMoved((m) => ({ ...m, [a.id]: to }))
@@ -86,7 +94,7 @@ export function AgentsList() {
             today: 0,
             todayLabel: a.todayLabel,
             runs: a.workflow,
-            href: "#",
+            href: a.href,
             fresh: true,
           }))}
         />
@@ -159,16 +167,14 @@ function AgentCard({
       <div className="flex items-start gap-3">
         <KindIcon kind={a.kind} />
         <span className="flex min-w-0 flex-1 flex-col leading-snug">
-          {fresh ? (
-            <span className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
-              {a.name}
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">Just created</span>
-            </span>
-          ) : (
+          <span className="flex flex-wrap items-center gap-2">
             <Link href={a.href} className="text-[15px] font-semibold hover:underline">
               {a.name}
             </Link>
-          )}
+            {fresh ? (
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">Just created</span>
+            ) : null}
+          </span>
           <span className="text-[13px] text-muted-foreground">{a.channel}</span>
         </span>
         <StatusDot status={status} className="pt-0.5 text-[13px]" />

@@ -387,7 +387,7 @@ export function FlowTab({
     ? steps.findIndex((s) => s.key === edits.selected)
     : -1;
   const sel = selIndex >= 0 ? steps[selIndex] : null;
-  const used = USED[agent.id];
+  const used = USED[agent.id] ?? [];
   const choices = ADD_STEP_KINDS.map((k) => ({ label: k, kind: k }));
   return (
     <div className="flex flex-col gap-4">
@@ -441,7 +441,7 @@ export function FlowTab({
             />
           ) : null}
           <Section title="When it runs" sub="Saves as soon as you change it.">
-            {RUNSET[agent.id].map((r) => (
+            {(RUNSET[agent.id] ?? [{ label: "Runs", value: agent.workflow, options: [agent.workflow, "Weekdays at 9 AM and 2 PM", "Daily at 8 AM", "Every hour, 7 AM to 6 PM"].filter((v, i, all) => all.indexOf(v) === i) }]).map((r) => (
               <div key={r.label} className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-muted-foreground">
                   {r.label}

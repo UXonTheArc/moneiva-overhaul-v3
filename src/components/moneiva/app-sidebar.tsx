@@ -1,5 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
+import { clearNewAgents } from "@/lib/moneiva/new-agents-store"
+
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -93,6 +96,10 @@ function isActive(pathname: string, href?: string) {
 
 export function AppSidebar() {
   const pathname = usePathname()
+  // Agents made with Create agent last only while you stay on the agent pages (mockup only).
+  useEffect(() => {
+    if (!pathname.startsWith("/agents")) clearNewAgents()
+  }, [pathname])
   if (pathname.startsWith("/setup")) return null
   return (
     <Sidebar variant="inset" collapsible="icon">

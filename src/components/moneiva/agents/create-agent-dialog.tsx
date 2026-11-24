@@ -27,7 +27,8 @@ export type CreatedAgent = {
   address: string
   desc: string
   start: string
-  steps: { kind: string; title: string }[]
+  steps: { kind: string; title: string; sub: string }[]
+  job: { who: string; goal: string; may: string; mayNot: string }
 }
 
 type Template = { name: string; sub: string; who: string; goal: string; may: string; mayNot: string; start: Start; schedule?: string }
@@ -120,12 +121,12 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated?: (a: C
   const startLine = start === "workflow" ? "Started by a workflow" : start === "schedule" ? schedule : ARRIVES[kind]
   const agentName = name.trim() || "New agent"
   const canvas = [
-    { kind: "Starts when", title: startLine },
-    { kind: "Agent", title: `${agentName} ${isCall ? "makes the call" : kind === "email" ? "writes the email" : "reads the file"}` },
-    { kind: "Check", title: "Did it get what it needed?" },
-    { kind: "Approval", title: "Wait for approval while in Learn" },
-    { kind: "Action", title: ACTION[kind] },
-    { kind: "Record", title: "Log to Activity" },
+    { kind: "Starts when", title: startLine, sub: start === "workflow" ? "Add it to a workflow from Workflows" : address.replace(" (new number)", "") },
+    { kind: "Agent", title: `${agentName} ${isCall ? "makes the call" : kind === "email" ? "writes the email" : "reads the file"}`, sub: job.goal || "Set its goal on Profile" },
+    { kind: "Check", title: "Did it get what it needed?", sub: "Yes: go on. No: try again later, then send to Inbox." },
+    { kind: "Approval", title: "Wait for approval while in Learn", sub: "Shows in Inbox until someone approves it" },
+    { kind: "Action", title: ACTION[kind], sub: "With what it found" },
+    { kind: "Record", title: "Log to Activity", sub: isCall ? "Recording, transcript and summary" : "What came in and what it did" },
   ]
   const tasks = [
     "Saving who it is and its job",
@@ -142,7 +143,7 @@ function Wizard({ onClose, onCreated }: { onClose: () => void; onCreated?: (a: C
     timers.current.push(
       setTimeout(() => {
         setStep(6)
-        onCreated?.({ name: agentName, kind, team, address: address.replace(" (new number)", ""), desc: job.goal || "Not set up yet.", start: startLine, steps: canvas })
+        onCreated?.({ name: agentName, kind, team, address: address.replace(" (new number)", ""), desc: job.goal || "Not set up yet.", start: startLine, steps: canvas, job })
       }, 650 * tasks.length + 500)
     )
   }

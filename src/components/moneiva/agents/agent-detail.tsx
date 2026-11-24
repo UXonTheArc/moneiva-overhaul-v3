@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleAlert, Ellipsis, FlaskConical, Pencil } from "lucide-react"
+import { CircleAlert, Ellipsis, FlaskConical, Pencil, Power } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { agentById, isLearning } from "@/lib/moneiva/agents-data"
 import { AGENT_STATUS_OPTIONS, FLOWS, requestTypesFor, type AgentId } from "@/lib/moneiva/agents-extra-data"
 import type { AgentStatus } from "@/lib/moneiva/data"
+import type { NewAgent } from "@/lib/moneiva/new-agents-store"
 
 import { AgentTestSheet } from "./agent-test-sheet"
 import { DataTab, FlowTab, ProfileTab, ToolsTab, TypesTab, type DraftStep, type StepEdits } from "./agent-tabs"
@@ -35,8 +36,8 @@ const NEW_STEP: Record<string, string> = {
   Record: "Log to Activity",
 }
 
-export function AgentDetail({ id }: { id: AgentId }) {
-  const agent = agentById(id)!
+export function AgentDetail({ id, custom }: { id: AgentId; custom?: NewAgent }) {
+  const agent = custom?.agent ?? agentById(id)!
   const q = useQuery()
   const rawTab = q.get("tab") as Tab | null
   const tab: Tab = rawTab && TABS.includes(rawTab) ? rawTab : "profile"
@@ -44,9 +45,9 @@ export function AgentDetail({ id }: { id: AgentId }) {
   const testOpen = q.get("test") === "1"
 
   const [status, setStatus] = useState<AgentStatus>(agent.status)
-  const [published, setPublished] = useState<DraftStep[]>(() => FLOWS[id].map((s, i) => ({ ...s, key: `s${i}` })))
+  const [published, setPublished] = useState<DraftStep[]>(() => (custom?.flow ?? FLOWS[id]).map((s, i) => ({ ...s, key: `s${i}` })))
   const [draft, setDraft] = useState<DraftStep[] | null>(null)
-  const [publishedNote, setPublishedNote] = useState("Published Oct 2 by Jordan Lee")
+  const [publishedNote, setPublishedNote] = useState(custom ? "Made today by Taylor Morgan" : "Published Oct 2 by Jordan Lee")
   const typeCount = requestTypesFor(agent).length
   const learning = isLearning(agent)
 
@@ -134,6 +135,13 @@ export function AgentDetail({ id }: { id: AgentId }) {
           </>
         }
       />
+
+      {custom && status === "off" ? (
+        <div className="flex items-center gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-3 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+          <Power className="size-4 flex-none" />
+          Just created. It&apos;s Off, so nothing goes out. Test it, check its canvas, then turn it on from the status menu.
+        </div>
+      ) : null}
 
       {status === "error" && agent.error ? (
         <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
